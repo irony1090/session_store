@@ -1,0 +1,17 @@
+{
+  "apps": [
+    {
+      "name": "api",
+      "cwd": ".",
+      "script": "java",
+      "args": [
+        "-jar",
+        "-Dspring.profiles.active=real",
+        "cafe-0.2.14.jar"
+      ],
+      "log_date_format": "YYYY-MM-DD HH:mm Z",
+      "exec_interpreter": "",
+      "exec_mode": "fork"
+    }
+  ]
+}
