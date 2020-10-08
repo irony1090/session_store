@@ -3,7 +3,6 @@ package prv.irony.java_api.annotation;
 
 import java.util.Iterator;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -27,6 +26,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
 import prv.irony.java_api.data.session.SessionWrap;
+import reactor.core.publisher.Mono;
 
 
 @Component
@@ -37,6 +37,7 @@ implements HandlerMethodArgumentResolver, ResponseBodyAdvice<Object>{
 
   @Autowired private WebClient webClient;
   private String SET_COOKIE = "Set-Cookie";
+  private String SESSION_NAME = "Nsess";
 
   @Override
   public boolean supportsParameter(MethodParameter parameter) {
@@ -55,32 +56,35 @@ implements HandlerMethodArgumentResolver, ResponseBodyAdvice<Object>{
 
     Iterator<String> headerNames = req.getHeaderNames().asIterator();
 
-    ClientResponse clientResponse =
-    webClient.mutate().build().get()
-      .uri("/")
-      .headers(httpHeaders -> {
-        while(headerNames.hasNext()){
-          String name = headerNames.next();
-          String val = req.getHeader(name);
-          httpHeaders.set(name, val);
-          // System.out.println(name+ " : " + val);
-        }
-      })
-      .exchange().block();
+    Mono<ClientResponse> mono = webClient.mutate().build().get()
+    .uri("/")
+    .headers(httpHeaders -> {
+      while(headerNames.hasNext()){
+        String name = headerNames.next();
+        String val = req.getHeader(name);
+        httpHeaders.set(name, val);
+        // System.out.println(name+ " : " + val);
+      }
+    })
+    .exchange();
+
+    ClientResponse clientResponse = mono.block();
     // var body = clientResponse.bodyToMono(HashMap.class).block();
     SessionWrap body = clientResponse.bodyToMono(SessionWrap.class).block();
     HttpHeaders clientHeader = clientResponse.headers().asHttpHeaders();
 
     Iterator<String> clientHeadersNames = clientHeader.keySet().iterator();
+    log.info("COOKIE!!! " + clientResponse.cookies().getFirst(SESSION_NAME).getValue());
     // System.out.println("클라이언트 헤더");
     // Cookie nsessCookie = this.getCookie(req, "Nsess");
     // System.out.println(nsessCookie != null ? nsessCookie.getValue() : null);
     while(clientHeadersNames.hasNext()){
       String name = clientHeadersNames.next();
-      String val = clientHeader.getFirst(name);
       // System.out.println(name + " : " + val);
-      if(SET_COOKIE.equalsIgnoreCase(name))
+      if(SET_COOKIE.equals(name)){
+        String val = clientHeader.getFirst(name);
         res.setHeader(SET_COOKIE, val);
+      }
       
     }
     log.info("BODY : " + body);
@@ -106,17 +110,8 @@ implements HandlerMethodArgumentResolver, ResponseBodyAdvice<Object>{
   }
 
   
-  public Cookie getCookie(HttpServletRequest req, String key){
-    Cookie[] cookies = req.getCookies();
-
-    if(cookies == null) return null;
-
-    for(int i=0; i<cookies.length; i++){
-      Cookie cookie = cookies[i];
-      if(cookie.getName().equals(key))
-        return cookie;
-    }
-    return null;
+  public class ExternalSessionStoreResolver{
+    // public ExternalSessionStoreResolver(WebClient)
   }
   
 }

@@ -6,13 +6,13 @@ router.get('/', (req, res) => {
   if(maxAge)
     req.session.cookie.maxAge = parseInt(maxAge);
 
-  const {cookie, ..._session} = req.session;
-  const {__lastAccess, ...session} = _session;
-  console.log(__lastAccess);
+  const {cookie, ...other} = req.session;
+  const {__lastAccess, ...session} = other;
   res.send({
     id: req.sessionID,
-    session, cookie,
-    lastAccess: __lastAccess
+    lastAccess: __lastAccess,
+    session, 
+    cookie
   })
 })
 
