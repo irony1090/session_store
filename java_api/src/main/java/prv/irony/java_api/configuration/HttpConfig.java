@@ -47,6 +47,7 @@ public class HttpConfig {
       .forEach(writer -> ((LoggingCodecSupport)writer).setEnableLoggingRequestDetails(true));
     
     return WebClient.builder()
+      .baseUrl("http://localhost:3090")
       .clientConnector(
         new ReactorClientHttpConnector(
           HttpClient
